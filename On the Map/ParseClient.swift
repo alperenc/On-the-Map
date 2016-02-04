@@ -49,11 +49,12 @@ class ParseClient: APIClient {
         }
     }
     
-    func submitStudentLocation(location: CLPlacemark, locationName: String, link: String, completion: (success: Bool) -> Void) {
+    func submitStudentLocation(location: CLPlacemark, locationName: String, link: String, completion: (success: Bool, error: NSError?) -> Void) {
         
         // Check for user
         guard let user = UdacityClient.sharedInstance().user else {
-            completion(success: false)
+            let userInfo = [NSLocalizedDescriptionKey : "User must be logged in"]
+            completion(success: false, error: NSError(domain: "noUser", code: 0, userInfo: userInfo))
             return
         }
         
@@ -74,9 +75,9 @@ class ParseClient: APIClient {
         // Post student location
         APIClient.sharedInstance().post(Constants.BaseSecureURL, method: Methods.StudentLocation, parameters: parameters, customHeaders: headers, customBody: body) { (result, error) -> Void in
             if error == nil {
-                completion(success: true)
+                completion(success: true, error: nil)
             } else {
-                completion(success: false)
+                completion(success: false, error: error)
             }
         }
         

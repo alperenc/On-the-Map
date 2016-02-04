@@ -32,8 +32,11 @@ class PostInformationViewController: UIViewController, UITextFieldDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        configureTextField(locationTextField)
-        configureTextField(linkTextField)
+        locationTextField.delegate = self
+        linkTextField.delegate = self
+        
+        configureTextField(locationTextField, tintColor: UIColor.whiteColor())
+        configureTextField(linkTextField, tintColor: UIColor.whiteColor())
         
         activityIndicator = UIActivityIndicatorView(activityIndicatorStyle: .White)
         activityIndicator?.hidesWhenStopped = true
@@ -49,26 +52,31 @@ class PostInformationViewController: UIViewController, UITextFieldDelegate {
             return
         }
         
+        activityIndicator?.startAnimating()
+        
         geocoder.geocodeAddressString(locationText) { (placemarks, error) -> Void in
             
-            self.activityIndicator?.startAnimating()
-            
-            if let placemarks = placemarks,
-                let location = placemarks.first {
+            dispatch_async(dispatch_get_main_queue()) { () -> Void in
+                if let error = error {
+                    self.activityIndicator?.stopAnimating()
+                    self.alertUser(title: "Geocoding failed.", message: error.localizedDescription)
+                    return
+                }
+                
+                if let placemarks = placemarks, let location = placemarks.first {
+                    self.activityIndicator?.stopAnimating()
+                    
                     self.location = location
                     
-                    dispatch_async(dispatch_get_main_queue()) { () -> Void in
-                        self.activityIndicator?.stopAnimating()
-                        
-                        self.changeView()
-                        
-                        let annotation = MKPointAnnotation()
-                        annotation.coordinate = (location.location?.coordinate)!
-                        
-                        self.mapView.addAnnotation(annotation)
-                        self.mapView.setRegion(MKCoordinateRegion(center: annotation.coordinate, span: MKCoordinateSpanMake(0.1, 0.1)), animated: true)
-                        
-                    }
+                    self.changeView()
+                    
+                    let annotation = MKPointAnnotation()
+                    annotation.coordinate = (location.location?.coordinate)!
+                    
+                    self.mapView.addAnnotation(annotation)
+                    self.mapView.setRegion(MKCoordinateRegion(center: annotation.coordinate, span: MKCoordinateSpanMake(0.1, 0.1)), animated: true)
+                }
+                
             }
         }
     }
@@ -79,16 +87,20 @@ class PostInformationViewController: UIViewController, UITextFieldDelegate {
             return
         }
         
-        ParseClient.sharedInstance().submitStudentLocation(location!, locationName: locationTextField.text!, link: linkTextField.text!) { (success) -> Void in
+        ParseClient.sharedInstance().submitStudentLocation(location!, locationName: locationTextField.text!, link: linkTextField.text!) { (success, error) -> Void in
             if success {
-                StudentLocations.sharedInstance().getStudentLocations { (success) -> Void in
+                StudentLocations.sharedInstance().getStudentLocations { (success, error) -> Void in
                     dispatch_async(dispatch_get_main_queue()) { () -> Void in
                         if success {
                             self.dismissViewControllerAnimated(true, completion: nil)
                         } else {
-                            self.alertUser(title: "Post unsuccessful", message: "Your location couldn't be submitted, please try again!")
+                            self.alertUser(title: "Post successful", message: "But, getting updated student locations failed to download. Simply close this view and refresh.")
                         }
                     }
+                }
+            } else {
+                dispatch_async(dispatch_get_main_queue()) { () -> Void in
+                    self.alertUser(title: "Post unsuccessful", message: (error?.localizedDescription)!)
                 }
             }
         }
@@ -99,19 +111,6 @@ class PostInformationViewController: UIViewController, UITextFieldDelegate {
     }
     
     // MARK: PostInformationViewController
-    
-    func alertUser(title title: String, message: String) {
-        let alertController = UIAlertController(title: title, message: message, preferredStyle: .Alert)
-        alertController.addAction(UIAlertAction(title: "Dismiss", style: .Default, handler: nil))
-        
-        presentViewController(alertController, animated: true, completion: nil)
-    }
-    
-    func configureTextField(textField: UITextField) {
-        textField.delegate = self
-        textField.tintColor = UIColor.whiteColor()
-        textField.attributedPlaceholder = NSAttributedString(string: textField.placeholder!, attributes: [NSForegroundColorAttributeName: UIColor.whiteColor()])
-    }
     
     func changeView() {
         

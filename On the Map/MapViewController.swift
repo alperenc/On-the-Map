@@ -69,17 +69,14 @@ class MapViewController: UIViewController, MKMapViewDelegate {
             mapView.removeAnnotations(annotations)
             annotations.removeAll()
             
-            studentLocations.getStudentLocations() { (success) -> Void in
+            studentLocations.getStudentLocations() { (success, error) -> Void in
                 dispatch_async(dispatch_get_main_queue()) { () -> Void in
                     self.activityIndicator?.stopAnimating()
                     
                     if success {
                         self.createAnnotations(self.studentLocations.locations)
                     } else {
-                        let alertController = UIAlertController(title: "Download failed!", message: "Student locations failed to download. Try again!", preferredStyle: .Alert)
-                        alertController.addAction(UIAlertAction(title: "Dismiss", style: .Default, handler: nil))
-                        
-                        self.presentViewController(alertController, animated: true, completion: nil)
+                        self.alertUser(title: "Download failed!", message: (error?.localizedDescription)!)
                     }
                     
                 }

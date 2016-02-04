@@ -22,8 +22,11 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        configureTextField(usernameTextField)
-        configureTextField(passwordTextField)
+        usernameTextField.delegate = self
+        passwordTextField.delegate = self
+        
+        configureTextField(usernameTextField, tintColor: UIColor.customDarkOrangeColor())
+        configureTextField(passwordTextField, tintColor: UIColor.customDarkOrangeColor())
         
         activityIndicator = UIActivityIndicatorView(activityIndicatorStyle: .White)
         activityIndicator?.hidesWhenStopped = true
@@ -51,7 +54,7 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
                 if success {
                     self.completeLogin()
                 } else {
-                    if error == nil {
+                    if let errorCode = error?.code where errorCode == 0 {
                         self.alertUser(title: "Wrong username or password", message: "Please make sure you entered correct email and password combination.")
                     } else {
                         self.alertUser(title: "Network connection failed", message: (error?.localizedDescription)!)
@@ -69,6 +72,17 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
     
     // MARK: LoginViewController
     
+    func completeLogin() {
+        let controller = self.storyboard!.instantiateViewControllerWithIdentifier("TabBarController") as! UITabBarController
+        presentViewController(controller, animated: true, completion: nil)
+    }
+
+}
+
+extension UIViewController {
+    
+    // MARK: Show alert to user
+    
     func alertUser(title title: String, message: String) {
         let alertController = UIAlertController(title: title, message: message, preferredStyle: .Alert)
         alertController.addAction(UIAlertAction(title: "Dismiss", style: .Default, handler: nil))
@@ -76,11 +90,11 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
         presentViewController(alertController, animated: true, completion: nil)
     }
     
-    func configureTextField(textField: UITextField) {
+    // MARK: Configure text field
+    
+    func configureTextField(textField: UITextField, tintColor: UIColor) {
         
-        textField.delegate = self
-        
-        textField.tintColor = UIColor.customDarkOrangeColor()
+        textField.tintColor = tintColor
         textField.attributedPlaceholder = NSAttributedString(string: textField.placeholder!, attributes: [NSForegroundColorAttributeName: UIColor.whiteColor()])
         
         let paddingView = UIView(frame: CGRectMake(0, 0, 20, textField.frame.height))
@@ -88,10 +102,4 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
         textField.leftViewMode = .Always
         
     }
-    
-    func completeLogin() {
-        let controller = self.storyboard!.instantiateViewControllerWithIdentifier("TabBarController") as! UITabBarController
-        presentViewController(controller, animated: true, completion: nil)
-    }
-
 }

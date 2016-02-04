@@ -25,20 +25,21 @@ class StudentLocations {
         return Singleton.sharedInstance
     }
     
-    func getStudentLocations(completion: (success: Bool) -> Void) {
+    func getStudentLocations(completion: (success: Bool, error: NSError?) -> Void) {
         
         locations.removeAll()
         
-        let parameters = [ParseClient.ParameterKeys.Limit: 100]
+        let parameters = [ParseClient.ParameterKeys.Limit: 100,
+            ParseClient.ParameterKeys.Order: "-updatedAt"]
         
         ParseClient.sharedInstance().getStudentLocations(parameters) { (locations, error) -> Void in
             guard let studentLocations = locations else {
-                completion(success: false)
+                completion(success: false, error: error)
                 return
             }
             
             self.locations = studentLocations
-            completion(success: true)
+            completion(success: true, error: nil)
         }
     }
     

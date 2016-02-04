@@ -60,17 +60,14 @@ class TableViewController: UITableViewController {
     func fetchStudentLocations(refresh refresh: Bool) {
         if studentLocations.locations.count == 0 || refresh {
             activityIndicator?.startAnimating()
-            studentLocations.getStudentLocations() { (success) -> Void in
+            studentLocations.getStudentLocations() { (success, error) -> Void in
                 dispatch_async(dispatch_get_main_queue()) { () -> Void in
                     self.activityIndicator?.stopAnimating()
                     
                     if success {
                         self.tableView.reloadData()
                     } else {
-                        let alertController = UIAlertController(title: "Download failed!", message: "Student locations failed to download. Try again!", preferredStyle: .Alert)
-                        alertController.addAction(UIAlertAction(title: "Dismiss", style: .Default, handler: nil))
-                        
-                        self.presentViewController(alertController, animated: true, completion: nil)
+                        self.alertUser(title: "Download failed!", message: (error?.localizedDescription)!)
                     }
                 }
             }
