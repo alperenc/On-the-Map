@@ -26,28 +26,28 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         super.viewDidLoad()
         mapView.delegate = self
         
-        activityIndicator = UIActivityIndicatorView(activityIndicatorStyle: .Gray)
+        activityIndicator = UIActivityIndicatorView(activityIndicatorStyle: .gray)
         activityIndicator?.hidesWhenStopped = true
         activityIndicator?.center = view.center
         mapView.addSubview(activityIndicator!)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         fetchStudentLocations(refresh: false)
     }
     
     // MARK: Actions
     
-    @IBAction func logout(sender: UIBarButtonItem) {
+    @IBAction func logout(_ sender: UIBarButtonItem) {
         activityIndicator?.startAnimating()
         
         UdacityClient.sharedInstance().logout { (success) -> Void in
-            dispatch_async(dispatch_get_main_queue()) { () -> Void in
+            DispatchQueue.main.async { () -> Void in
                 self.activityIndicator?.stopAnimating()
                 
                 if success {
-                    self.dismissViewControllerAnimated(true, completion: nil)
+                    self.dismiss(animated: true, completion: nil)
                 } else {
                     print("Logout failed.")
                 }
@@ -55,13 +55,13 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         }
     }
     
-    @IBAction func refresh(sender: UIBarButtonItem) {
+    @IBAction func refresh(_ sender: UIBarButtonItem) {
         fetchStudentLocations(refresh: true)
     }
     
     // MARK: MapViewController
     
-    func fetchStudentLocations(refresh refresh: Bool) {
+    func fetchStudentLocations(refresh: Bool) {
         
         if studentLocations.locations.count == 0 || refresh {
             activityIndicator?.startAnimating()
@@ -70,7 +70,7 @@ class MapViewController: UIViewController, MKMapViewDelegate {
             annotations.removeAll()
             
             studentLocations.getStudentLocations() { (success, error) -> Void in
-                dispatch_async(dispatch_get_main_queue()) { () -> Void in
+                DispatchQueue.main.async { () -> Void in
                     self.activityIndicator?.stopAnimating()
                     
                     if success {
@@ -86,7 +86,7 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         }
     }
     
-    func createAnnotations(locations: [StudentInformation]) {
+    func createAnnotations(_ locations: [StudentInformation]) {
         
         for info in locations {
             
@@ -106,17 +106,17 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     
     // MARK: Map View Delegate
     
-    func mapView(mapView: MKMapView, viewForAnnotation annotation: MKAnnotation) -> MKAnnotationView? {
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         
         let reuseId = "studentInfo"
         
-        var pinView = mapView.dequeueReusableAnnotationViewWithIdentifier(reuseId) as? MKPinAnnotationView
+        var pinView = mapView.dequeueReusableAnnotationView(withIdentifier: reuseId) as? MKPinAnnotationView
         
         if pinView == nil {
             pinView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: reuseId)
             pinView!.canShowCallout = true
             pinView!.pinTintColor = UIColor.customOrangeColor()
-            pinView!.rightCalloutAccessoryView = UIButton(type: .DetailDisclosure)
+            pinView!.rightCalloutAccessoryView = UIButton(type: .detailDisclosure)
         }
         else {
             pinView!.annotation = annotation
@@ -127,11 +127,11 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     
     // This delegate method is implemented to respond to taps. It opens the system browser
     // to the URL specified in the annotationViews subtitle property.
-    func mapView(mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
+    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
         if control == view.rightCalloutAccessoryView {
-            let app = UIApplication.sharedApplication()
+            let app = UIApplication.shared
             if let toOpen = view.annotation?.subtitle! {
-                app.openURL(NSURL(string: toOpen)!)
+                app.openURL(URL(string: toOpen)!)
             }
         }
     }

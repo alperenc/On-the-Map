@@ -29,7 +29,7 @@ class UdacityClient: APIClient {
     
     // MARK: Login
     
-    func login(username username: String?, password: String?, completion: (success: Bool, error: NSError?) -> Void) {
+    func login(username: String?, password: String?, completion: @escaping (_ success: Bool, _ error: NSError?) -> Void) {
         
         // Specify parameters, method (if has {key}), custom headers and body (if POST)
         let parameters = [String: AnyObject]()
@@ -37,15 +37,15 @@ class UdacityClient: APIClient {
         let body = ["udacity": ["username": username!, "password": password!]]
         
         // Post the session
-        APIClient.sharedInstance().post(Constants.BaseSecureURL, method: Methods.Session, parameters: parameters, customHeaders: nil, customBody: body) { (result, error) in
+        APIClient.sharedInstance().post(Constants.BaseSecureURL, method: Methods.Session, parameters: parameters, customHeaders: nil, customBody: body as [String : AnyObject]) { (result, error) in
             if let error = error {
                 print("Login failed with error: \(error)")
-                completion(success: false, error: error)
+                completion(false, error)
             } else {
-                if let data = result as? NSData {
+                if let data = result as? Data {
                     UdacityClient.parseJSONWithCompletionHandler(data) { (result, error) in
-                        guard let session = result["session"] as? [String: AnyObject],
-                        let account = result["account"] as? [String: AnyObject] else {
+                        guard let session = result?["session"] as? [String: AnyObject],
+                        let account = result?["account"] as? [String: AnyObject] else {
                             print("No such keys: session, account")
                             return
                         }
@@ -56,16 +56,16 @@ class UdacityClient: APIClient {
                         UdacityClient.sharedInstance().getUserData { (userInfo, error) -> Void in
                             if let info = userInfo {
                                 self.user = User(info: info)
-                                completion(success: true, error: nil)
+                                completion(true, nil)
                             } else {
-                                completion(success: false, error: error)
+                                completion(false, error)
                             }
                         }
                     }
                 } else {
                     print("Login failed. No valid data is returned from Udacity server.")
                     let userInfo = [NSLocalizedDescriptionKey : "No valid data is returned from Udacity server."]
-                    completion(success: false, error: NSError(domain: "invalidData", code: 0, userInfo: userInfo))
+                    completion(false, NSError(domain: "invalidData", code: 0, userInfo: userInfo))
                 }
             }
         }
@@ -73,7 +73,7 @@ class UdacityClient: APIClient {
     
     // MARK: Get User Data
     
-    func getUserData(completion: (userInfo: [String: AnyObject]?, error: NSError?) -> Void) {
+    func getUserData(_ completion: @escaping (_ userInfo: [String: AnyObject]?, _ error: NSError?) -> Void) {
         
         // Specify parameters, method (if has {key}), custom headers and body (if POST)
         let parameters = [String: AnyObject]()
@@ -93,16 +93,16 @@ class UdacityClient: APIClient {
             
             if let error = error {
                 print("Getting public user data failed with error: \(error)")
-                completion(userInfo: nil, error: error)
+                completion(nil, error)
             } else {
-                if let data = result as? NSData {
+                if let data = result as? Data {
                     UdacityClient.parseJSONWithCompletionHandler(data) { (result, error) in
-                        guard let user = result["user"] as? [String: AnyObject] else {
+                        guard let user = result?["user"] as? [String: AnyObject] else {
                             print("No such key: user")
                             return
                         }
                         
-                        completion(userInfo: user, error: nil)
+                        completion(user, nil)
                     }
                 }
             }
@@ -111,32 +111,32 @@ class UdacityClient: APIClient {
     
     // MARK: Logout
     
-    func logout(completion:(success: Bool) -> Void) {
+    func logout(_ completion:@escaping (_ success: Bool) -> Void) {
         
         // Specify parameters, method (if has {key}), custom headers and body (if POST)
-        var xsrfCookie: NSHTTPCookie? = nil
+        var xsrfCookie: HTTPCookie? = nil
         var headers = [String:AnyObject]()
         
-        let sharedCookieStorage = NSHTTPCookieStorage.sharedHTTPCookieStorage()
+        let sharedCookieStorage = HTTPCookieStorage.shared
         for cookie in sharedCookieStorage.cookies! {
             if cookie.name == "XSRF-TOKEN" { xsrfCookie = cookie }
         }
         
         if let xsrfCookie = xsrfCookie {
-            headers["X-XSRF-TOKEN"] = xsrfCookie.value
+            headers["X-XSRF-TOKEN"] = xsrfCookie.value as AnyObject?
         }
         
         // Delete the session
         APIClient.sharedInstance().delete(Constants.BaseSecureURL, method: Methods.Session, customHeaders: headers) { (result, error) -> Void in
             if let error = error {
                 print("Logout failed with error: \(error)")
-                completion(success: false)
+                completion(false)
             } else {
                 self.user = nil
                 self.sessionID = nil
                 self.userID = nil
                 
-                completion(success: true)
+                completion(true)
             }
         }
         
@@ -146,9 +146,10 @@ class UdacityClient: APIClient {
     
     /*  Helper: Given raw JSON, return a usable Foundation object
         Modified to skip the first 5 characters of the response from Udacity API */
-    override class func parseJSONWithCompletionHandler(data: NSData, completionHandler: (result: AnyObject!, error: NSError?) -> Void) {
+    override class func parseJSONWithCompletionHandler(_ data: Data, completionHandler: (_ result: AnyObject?, _ error: NSError?) -> Void) {
         
-        let newData = data.subdataWithRange(NSMakeRange(5, data.length - 5))
+        let range = Range(uncheckedBounds: (5, data.count))
+        let newData = data.subdata(in: range)
         
         super.parseJSONWithCompletionHandler(newData, completionHandler: completionHandler)
     }

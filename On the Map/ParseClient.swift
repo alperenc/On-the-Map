@@ -22,7 +22,7 @@ class ParseClient: APIClient {
         return Singleton.sharedInstance
     }
     
-    func getStudentLocations(parameters: [String: AnyObject], completion:(locations: [StudentInformation]?, error: NSError?) -> Void) {
+    func getStudentLocations(_ parameters: [String: AnyObject], completion:@escaping (_ locations: [StudentInformation]?, _ error: NSError?) -> Void) {
         
         // Specify parameters, method (if has {key}), custom headers and body (if POST)
         let parameters = parameters
@@ -31,30 +31,31 @@ class ParseClient: APIClient {
             HeaderKeys.RESTAPIKey: Constants.RESTAPIKey]
         
         // Get student locations
-        APIClient.sharedInstance().get(Constants.BaseSecureURL, method: Methods.StudentLocation, parameters: parameters, customHeaders: headers) { (result, error) -> Void in
+        APIClient.sharedInstance().get(Constants.BaseSecureURL, method: Methods.StudentLocation, parameters: parameters, customHeaders: headers as [String : AnyObject]?) { (result, error) -> Void in
             if let data = result as? NSData {
-                APIClient.parseJSONWithCompletionHandler(data) { (result, error) -> Void in
-                    guard let results = result["results"] as? [[String: AnyObject]] else {
+                APIClient.parseJSONWithCompletionHandler(data as Data) { (result, error) -> Void in
+                    guard let results = result?["results"] as? [[String: AnyObject]] else {
                         print("Failed to retrieve student locations.")
-                        completion(locations: nil, error: error)
+                        completion(nil, error)
                         return
                     }
                     
-                    completion(locations: self.createStudentLocations(results), error: nil)
+                    completion(self.createStudentLocations(results), nil)
                 }
             } else {
-                completion(locations: nil, error: error)
+                completion(nil, error)
             }
             
         }
+        
     }
     
-    func submitStudentLocation(location: CLPlacemark, locationName: String, link: String, completion: (success: Bool, error: NSError?) -> Void) {
+    func submitStudentLocation(_ location: CLPlacemark, locationName: String, link: String, completion: @escaping (_ success: Bool, _ error: NSError?) -> Void) {
         
         // Check for user
         guard let user = UdacityClient.sharedInstance().user else {
             let userInfo = [NSLocalizedDescriptionKey : "User must be logged in"]
-            completion(success: false, error: NSError(domain: "noUser", code: 0, userInfo: userInfo))
+            completion(false, NSError(domain: "noUser", code: 0, userInfo: userInfo))
             return
         }
         
@@ -64,26 +65,26 @@ class ParseClient: APIClient {
         let headers = [HeaderKeys.ApplicationID: Constants.ApplicationID,
             HeaderKeys.RESTAPIKey: Constants.RESTAPIKey]
         
-        let body : [String: AnyObject] = [BodyKeys.UniqueKey: user.id,
-            BodyKeys.FirstName: user.firstName,
-            BodyKeys.LastName: user.lastName,
-            BodyKeys.MapString: locationName,
-            BodyKeys.MediaURL: link,
-            BodyKeys.Latitude: (location.location?.coordinate.latitude)!,
-            BodyKeys.Longitude: (location.location?.coordinate.longitude)!]
+        let body : [String: AnyObject] = [BodyKeys.UniqueKey: user.id as AnyObject,
+            BodyKeys.FirstName: user.firstName as AnyObject,
+            BodyKeys.LastName: user.lastName as AnyObject,
+            BodyKeys.MapString: locationName as AnyObject,
+            BodyKeys.MediaURL: link as AnyObject,
+            BodyKeys.Latitude: (location.location?.coordinate.latitude)! as AnyObject,
+            BodyKeys.Longitude: (location.location?.coordinate.longitude)! as AnyObject]
         
         // Post student location
-        APIClient.sharedInstance().post(Constants.BaseSecureURL, method: Methods.StudentLocation, parameters: parameters, customHeaders: headers, customBody: body) { (result, error) -> Void in
+        APIClient.sharedInstance().post(Constants.BaseSecureURL, method: Methods.StudentLocation, parameters: parameters, customHeaders: headers as [String : AnyObject]?, customBody: body) { (result, error) -> Void in
             if error == nil {
-                completion(success: true, error: nil)
+                completion(true, nil)
             } else {
-                completion(success: false, error: error)
+                completion(false, error)
             }
         }
         
     }
     
-    func createStudentLocations(results: [[String: AnyObject]]) -> [StudentInformation] {
+    func createStudentLocations(_ results: [[String: AnyObject]]) -> [StudentInformation] {
         var locations = [StudentInformation]()
         
         for studentInfo in results {
@@ -105,7 +106,7 @@ extension ParseClient {
         static let RESTAPIKey = "QuWThTdiRmTux3YaDseUSEpUKo7aBYM737yKd4gY"
         
         // MARK: URLs
-        static let BaseSecureURL = "https://api.parse.com/1/classes/"
+        static let BaseSecureURL = "https://parse.udacity.com/parse/classes/"
         
     }
     

@@ -28,7 +28,7 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
         configureTextField(usernameTextField, tintColor: UIColor.customDarkOrangeColor())
         configureTextField(passwordTextField, tintColor: UIColor.customDarkOrangeColor())
         
-        activityIndicator = UIActivityIndicatorView(activityIndicatorStyle: .White)
+        activityIndicator = UIActivityIndicatorView(activityIndicatorStyle: .white)
         activityIndicator?.hidesWhenStopped = true
         activityIndicator?.center = view.center
         view.addSubview(activityIndicator!)
@@ -36,7 +36,7 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
     
     // MARK: Actions
     
-    @IBAction func login(sender: UIButton) {
+    @IBAction func login(_ sender: UIButton) {
         
         // Check for username and password
         guard let username = usernameTextField.text, let password = passwordTextField.text else {
@@ -48,13 +48,13 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
         
         UdacityClient.sharedInstance().login(username: username, password: password) { (success, error) in
             
-            dispatch_async(dispatch_get_main_queue()) { () -> Void in
+            DispatchQueue.main.async { () -> Void in
                 self.activityIndicator?.stopAnimating()
                 
                 if success {
                     self.completeLogin()
                 } else {
-                    if let errorCode = error?.code where errorCode == 0 {
+                    if let errorCode = error?.code, errorCode == 0 {
                         self.alertUser(title: "Wrong username or password", message: "Please make sure you entered correct email and password combination.")
                     } else {
                         self.alertUser(title: "Network connection failed", message: (error?.localizedDescription)!)
@@ -64,17 +64,17 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
         }
     }
 
-    @IBAction func signUp(sender: UIButton) {
+    @IBAction func signUp(_ sender: UIButton) {
         
         // Open Udacity's sign up page in Safari
-        UIApplication.sharedApplication().openURL(NSURL(string: UdacityClient.Constants.SignUpURL)!)
+        UIApplication.shared.openURL(URL(string: UdacityClient.Constants.SignUpURL)!)
     }
     
     // MARK: LoginViewController
     
     func completeLogin() {
-        let controller = self.storyboard!.instantiateViewControllerWithIdentifier("TabBarController") as! UITabBarController
-        presentViewController(controller, animated: true, completion: nil)
+        let controller = self.storyboard!.instantiateViewController(withIdentifier: "TabBarController") as! UITabBarController
+        present(controller, animated: true, completion: nil)
     }
 
 }
@@ -83,23 +83,23 @@ extension UIViewController {
     
     // MARK: Show alert to user
     
-    func alertUser(title title: String, message: String) {
-        let alertController = UIAlertController(title: title, message: message, preferredStyle: .Alert)
-        alertController.addAction(UIAlertAction(title: "Dismiss", style: .Default, handler: nil))
+    func alertUser(title: String, message: String) {
+        let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alertController.addAction(UIAlertAction(title: "Dismiss", style: .default, handler: nil))
         
-        presentViewController(alertController, animated: true, completion: nil)
+        present(alertController, animated: true, completion: nil)
     }
     
     // MARK: Configure text field
     
-    func configureTextField(textField: UITextField, tintColor: UIColor) {
+    func configureTextField(_ textField: UITextField, tintColor: UIColor) {
         
         textField.tintColor = tintColor
-        textField.attributedPlaceholder = NSAttributedString(string: textField.placeholder!, attributes: [NSForegroundColorAttributeName: UIColor.whiteColor()])
+        textField.attributedPlaceholder = NSAttributedString(string: textField.placeholder!, attributes: [NSForegroundColorAttributeName: UIColor.white])
         
-        let paddingView = UIView(frame: CGRectMake(0, 0, 20, textField.frame.height))
+        let paddingView = UIView(frame: CGRect(x: 0, y: 0, width: 20, height: textField.frame.height))
         textField.leftView = paddingView
-        textField.leftViewMode = .Always
+        textField.leftViewMode = .always
         
     }
 }

@@ -35,10 +35,10 @@ class PostInformationViewController: UIViewController, UITextFieldDelegate {
         locationTextField.delegate = self
         linkTextField.delegate = self
         
-        configureTextField(locationTextField, tintColor: UIColor.whiteColor())
-        configureTextField(linkTextField, tintColor: UIColor.whiteColor())
+        configureTextField(locationTextField, tintColor: UIColor.white)
+        configureTextField(linkTextField, tintColor: UIColor.white)
         
-        activityIndicator = UIActivityIndicatorView(activityIndicatorStyle: .White)
+        activityIndicator = UIActivityIndicatorView(activityIndicatorStyle: .white)
         activityIndicator?.hidesWhenStopped = true
         activityIndicator?.center = view.center
         view.addSubview(activityIndicator!)
@@ -46,7 +46,7 @@ class PostInformationViewController: UIViewController, UITextFieldDelegate {
     
     // MARK: Actions
     
-    @IBAction func findLocation(sender: UIButton) {
+    @IBAction func findLocation(_ sender: UIButton) {
         
         guard let locationText = locationTextField.text else {
             return
@@ -56,7 +56,7 @@ class PostInformationViewController: UIViewController, UITextFieldDelegate {
         
         geocoder.geocodeAddressString(locationText) { (placemarks, error) -> Void in
             
-            dispatch_async(dispatch_get_main_queue()) { () -> Void in
+            DispatchQueue.main.async { () -> Void in
                 if let error = error {
                     self.activityIndicator?.stopAnimating()
                     self.alertUser(title: "Geocoding failed.", message: error.localizedDescription)
@@ -81,7 +81,7 @@ class PostInformationViewController: UIViewController, UITextFieldDelegate {
         }
     }
     
-    @IBAction func submitLocation(sender: UIButton) {
+    @IBAction func submitLocation(_ sender: UIButton) {
         if linkTextField.text == "" {
             alertUser(title: "Empty link", message: "Link cannot be empty. Please provide a link to share.")
             return
@@ -90,24 +90,24 @@ class PostInformationViewController: UIViewController, UITextFieldDelegate {
         ParseClient.sharedInstance().submitStudentLocation(location!, locationName: locationTextField.text!, link: linkTextField.text!) { (success, error) -> Void in
             if success {
                 StudentLocations.sharedInstance().getStudentLocations { (success, error) -> Void in
-                    dispatch_async(dispatch_get_main_queue()) { () -> Void in
+                    DispatchQueue.main.async { () -> Void in
                         if success {
-                            self.dismissViewControllerAnimated(true, completion: nil)
+                            self.dismiss(animated: true, completion: nil)
                         } else {
                             self.alertUser(title: "Post successful", message: "But, getting updated student locations failed to download. Simply close this view and refresh.")
                         }
                     }
                 }
             } else {
-                dispatch_async(dispatch_get_main_queue()) { () -> Void in
+                DispatchQueue.main.async { () -> Void in
                     self.alertUser(title: "Post unsuccessful", message: (error?.localizedDescription)!)
                 }
             }
         }
     }
     
-    @IBAction func cancel(sender: UIBarButtonItem) {
-        dismissViewControllerAnimated(true, completion: nil)
+    @IBAction func cancel(_ sender: UIBarButtonItem) {
+        dismiss(animated: true, completion: nil)
     }
     
     // MARK: PostInformationViewController
@@ -117,30 +117,30 @@ class PostInformationViewController: UIViewController, UITextFieldDelegate {
         let navBar = navigationController?.navigationBar
         
         navBar?.barTintColor = UIColor.customLightBlueColor()
-        navBar?.tintColor = UIColor.whiteColor()
+        navBar?.tintColor = UIColor.white
         
         topContainer.backgroundColor = UIColor.customLightBlueColor()
-        questionLabel.hidden = true
-        linkTextField.hidden = false
+        questionLabel.isHidden = true
+        linkTextField.isHidden = false
         
-        locationTextField.hidden = true
-        mapView.hidden = false
+        locationTextField.isHidden = true
+        mapView.isHidden = false
         
         bottomContainer.alpha = 0.7
-        findButton.hidden = true
-        submitButton.hidden = false
+        findButton.isHidden = true
+        submitButton.isHidden = false
         
     }
     
     // MARK: Text Field Delegate
     
-    func textFieldDidEndEditing(textField: UITextField) {
+    func textFieldDidEndEditing(_ textField: UITextField) {
         if textField.text == "" {
             alertUser(title: "Empty location", message: "Provide a location to find on the map.")
         }
     }
     
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         view.endEditing(true)
         return true
     }

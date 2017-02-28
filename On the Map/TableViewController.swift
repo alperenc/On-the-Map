@@ -21,13 +21,13 @@ class TableViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        activityIndicator = UIActivityIndicatorView(activityIndicatorStyle: .Gray)
+        activityIndicator = UIActivityIndicatorView(activityIndicatorStyle: .gray)
         activityIndicator?.hidesWhenStopped = true
         activityIndicator?.center = tableView.center
         tableView.addSubview(activityIndicator!)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         fetchStudentLocations(refresh: false)
@@ -35,15 +35,15 @@ class TableViewController: UITableViewController {
     
     // MARK: Actions
     
-    @IBAction func logout(sender: UIBarButtonItem) {
+    @IBAction func logout(_ sender: UIBarButtonItem) {
         activityIndicator?.startAnimating()
         
         UdacityClient.sharedInstance().logout { (success) -> Void in
-            dispatch_async(dispatch_get_main_queue()) { () -> Void in
+            DispatchQueue.main.async { () -> Void in
                 self.activityIndicator?.stopAnimating()
                 
                 if success {
-                    self.dismissViewControllerAnimated(true, completion: nil)
+                    self.dismiss(animated: true, completion: nil)
                 } else {
                     print("Logout failed.")
                 }
@@ -51,17 +51,17 @@ class TableViewController: UITableViewController {
         }
     }
     
-    @IBAction func refresh(sender: UIBarButtonItem) {
+    @IBAction func refresh(_ sender: UIBarButtonItem) {
         fetchStudentLocations(refresh: true)
     }
     
     // MARK: TableViewController
     
-    func fetchStudentLocations(refresh refresh: Bool) {
+    func fetchStudentLocations(refresh: Bool) {
         if studentLocations.locations.count == 0 || refresh {
             activityIndicator?.startAnimating()
             studentLocations.getStudentLocations() { (success, error) -> Void in
-                dispatch_async(dispatch_get_main_queue()) { () -> Void in
+                DispatchQueue.main.async { () -> Void in
                     self.activityIndicator?.stopAnimating()
                     
                     if success {
@@ -76,28 +76,28 @@ class TableViewController: UITableViewController {
     
     // MARK: Table View Data Source
     
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return studentLocations.locations.count
     }
     
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCellWithIdentifier("studentCell") as UITableViewCell!
+        let cell = tableView.dequeueReusableCell(withIdentifier: "studentCell") as UITableViewCell!
         
         let studentInfo = studentLocations.locations[indexPath.row]
         
-        cell.textLabel?.text = "\(studentInfo.firstName) \(studentInfo.lastName)"
-        cell.detailTextLabel?.text = studentInfo.mediaURL
+        cell?.textLabel?.text = "\(studentInfo.firstName) \(studentInfo.lastName)"
+        cell?.detailTextLabel?.text = studentInfo.mediaURL
         
-        return cell
+        return cell!
     }
     
     // MARK: Table View Delegate
     
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let studentInfo = studentLocations.locations[indexPath.row]
-        let app = UIApplication.sharedApplication()
-        app.openURL(NSURL(string: studentInfo.mediaURL)!)
+        let app = UIApplication.shared
+        app.openURL(URL(string: studentInfo.mediaURL)!)
     }
     
 }
